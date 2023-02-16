@@ -7,20 +7,16 @@ import com.bank.bank.repositories.AccountRepository;
 import com.bank.bank.services.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-public class AccountController {
+public class AdminController {
     @Autowired
     AccountRepository accountRepository;
     @Autowired
     AccountHolderRepository accountHolderRepository;
     @Autowired
     AdminService adminService;
-
     @PostMapping("/new-savingsAccount")
     @ResponseStatus(HttpStatus.CREATED)
     public Account findAllSavings(@RequestBody AccountDTO accountDTO){
@@ -29,12 +25,17 @@ public class AccountController {
     @PostMapping("/new-checkingAccount")
     @ResponseStatus(HttpStatus.CREATED)
     public Account findAllChecking(@RequestBody AccountDTO accountDTO){
-        return adminService.createCheckingAccount(accountDTO);
+        return adminService.createCheckingOrStudentAccount(accountDTO);
     }
     @PostMapping("/new-creditAccount")
     @ResponseStatus(HttpStatus.CREATED)
     public Account findAllCredits(@RequestBody AccountDTO accountDTO){
         return adminService.createCreditCard(accountDTO);
+    }
+    @DeleteMapping("/accounts/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAccount(@PathVariable("id") Integer accountId) {
+        accountRepository.deleteById(accountId);
     }
 
 }

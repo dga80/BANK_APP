@@ -3,6 +3,7 @@ package com.bank.bank.services;
 import com.bank.bank.enums.AccountStatus;
 import com.bank.bank.models.*;
 import com.bank.bank.models.DTO.AccountDTO;
+import com.bank.bank.models.DTO.ThirdPartyDTO;
 import com.bank.bank.repositories.AccountHolderRepository;
 import com.bank.bank.repositories.AccountRepository;
 import com.bank.bank.repositories.ThirdPartyRepository;
@@ -13,7 +14,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.Period;
 
 @Service
 public class AdminService {
@@ -58,7 +58,6 @@ public class AdminService {
 
         String interestRateOK = accountDTO.getInterestRate() != null && accountDTO.getInterestRate().compareTo(minInterestRate) >= 0 ? accountDTO.getInterestRate() : defaultInterestRate;
 
-        //Hay que cambiar a creditLimitOK y interestRateOK??
         CreditCard creditCard = new CreditCard(new BigDecimal(accountDTO.getBalance()), accountDTO.getSecretKey(), primaryOwner, secondaryOwner, new BigDecimal(accountDTO.getPenaltyFee()), AccountStatus.ACTIVE, new BigDecimal(accountDTO.getCreditLimit()), new BigDecimal(accountDTO.getInterestRate()));
         return  accountRepository.save(creditCard);
     }
@@ -77,22 +76,31 @@ public class AdminService {
             return accountRepository.save(studentChecking);
         }
     }
-    public void updateBalanceFromAccount(Account account, String balance) {
+
+    public Account updateBalance(AccountDTO accountDTO) {
+        Account account = accountRepository.findById(accountDTO.getPrimaryOwnerId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (account == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found");
+        }
         try {
-            account.setBalance(new BigDecimal(balance));
+            account.setBalance(new BigDecimal(accountDTO.getBalance()));
         } catch (NumberFormatException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid balance value");
         }
         accountRepository.save(account);
+        return account;
     }
-    public ThirdParty addThirdParty(String name, LocalDate birthDate, Integer id, String hashedKey) {
-        if (thirdPartyRepository.findThirdByHashedKey(hashedKey) != null) {
+
+    public ThirdParty addThirdParty(ThirdPartyDTO thirdPartyDTO, String name, LocalDate birthDate, Integer id) {
+        if (thirdPartyRepository.findByHashedKey(thirdPartyDTO.getHashedKey()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "ThirdParty with this hashedKey already exists");
         }
 
-        ThirdParty newThirdParty = new ThirdParty(name, birthDate, id, hashedKey);
+        ThirdParty newThirdParty = new ThirdParty(name, birthDate, id, thirdPartyDTO.getHashedKey());
         return thirdPartyRepository.save(newThirdParty);
     }
+
+
 
 
 

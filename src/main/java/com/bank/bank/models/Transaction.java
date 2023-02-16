@@ -23,6 +23,12 @@ public class Transaction {
     public Transaction() {
     }
 
+    public Transaction(Account originAccount, Account endAccount, BigDecimal quantity) {
+        this.originAccount = originAccount;
+        this.endAccount = endAccount;
+        this.quantity = quantity;
+    }
+
     public Account getOriginAccount() {
         return originAccount;
     }

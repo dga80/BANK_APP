@@ -45,7 +45,8 @@ class BankApplicationTests {
 
 		BigDecimal interestRate = new BigDecimal("0.05");
 		BigDecimal minimumBalance = new BigDecimal("500");
-		Savings savingsAccount = new Savings();
+		Savings savingsAccount = new Savings(BigDecimal.valueOf(222222),"1234", accountHolder1,null,BigDecimal.valueOf(10), AccountStatus.ACTIVE,BigDecimal.valueOf(0.05),BigDecimal.valueOf(500));
+		accountRepository.save(savings1);
 
 		assertEquals(interestRate, savingsAccount.getInterestRate());
 		assertEquals(minimumBalance, savingsAccount.getMinimumBalance());

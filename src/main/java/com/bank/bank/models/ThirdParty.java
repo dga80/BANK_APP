@@ -21,6 +21,7 @@ public class ThirdParty extends User{
         this.hashedKey = hashedKey;
     }
 
+
     public Integer getId() {
         return id;
     }

@@ -1,12 +1,12 @@
 package com.bank.bank;
 
 import com.bank.bank.enums.AccountStatus;
-import com.bank.bank.models.AccountHolder;
-import com.bank.bank.models.Address;
+import com.bank.bank.models.*;
 import com.bank.bank.models.DTO.AccountDTO;
-import com.bank.bank.models.Savings;
+import com.bank.bank.models.DTO.TransactionDTO;
 import com.bank.bank.repositories.AccountHolderRepository;
 import com.bank.bank.repositories.AccountRepository;
+import com.bank.bank.repositories.TransactionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,13 +18,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,6 +41,8 @@ public class BankControllerTest {
     AccountRepository accountRepository;
     @Autowired
     AccountHolderRepository accountHolderRepository;
+    @Autowired
+    TransactionRepository transactionRepository;
 
     @BeforeEach
     void setUP() {
@@ -53,26 +56,79 @@ public class BankControllerTest {
     }
     @AfterEach
     void tearDown(){
+        transactionRepository.deleteAll();
         accountRepository.deleteAll();
     }
     @Test
-    void shouldReturnSavings_WhenSavingsIsCalled() throws Exception {
+    void shouldAddNewSavingAccount_WhenPostIsPerformed() throws Exception {
         AccountDTO accountDTO = new AccountDTO("400","1234",1,1,"5","300","40", "1000", "40");
         String body = objectMapper.writeValueAsString(accountDTO);
-        //System.out.println(body);
 
         MvcResult mvcResult = mockMvc.perform(post("/new-savingsAccount").content(body).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated()).andReturn();
-        System.err.println(mvcResult.getResponse().getContentAsString());
+        assertTrue(mvcResult.getResponse().getContentAsString().contains(accountHolderRepository.findById(1).get().getName()));
+    }
+    @Test
+    void shouldAddCheckingAccount_WhenPostIsPerformed() throws Exception {
+        AccountDTO accountDTO = new AccountDTO("400","1234",1,1,"5","300","40", "1000", "40");
+        String body = objectMapper.writeValueAsString(accountDTO);
+
+        MvcResult mvcResult = mockMvc.perform(post("/new-checkingAccount").content(body).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated()).andReturn();
+        assertTrue(mvcResult.getResponse().getContentAsString().contains(accountHolderRepository.findById(1).get().getName()));
+    }
+
+    @Test
+    void shouldAddNewCreditAccount_WhenPostIsPerformed() throws Exception {
+        AccountDTO accountDTO = new AccountDTO("500","5678",1,2,"6","400","50", "2000", "50");
+        String body = objectMapper.writeValueAsString(accountDTO);
+
+        MvcResult mvcResult = mockMvc.perform(post("/new-creditAccount").content(body).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated()).andReturn();
+
+        //System.err.println(mvcResult.getResolvedException());
         assertTrue(mvcResult.getResponse().getContentAsString().contains(accountHolderRepository.findById(1).get().getName()));
 
     }
     @Test
-    void shouldAddNewSavingAccount_WhenPostIsPerformed() throws Exception {
-        Address address3 = new Address("c/garcilaso","barcelona","españa","08027");
-        String body = objectMapper.writeValueAsString(address3);
-        MvcResult mvcResult = mockMvc.perform(post("/new-savingsAccount").content(body).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated()).andReturn();
-        assertTrue(mvcResult.getResponse().getContentAsString().contains("c/garcilaso"));
+    void shouldUpdateBalance_WhenValidInputIsProvided() throws Exception {
+
+        AccountDTO accountDTO = new AccountDTO("500","5678",1,2,"6","400","50", "2000", "50");
+
+        String body = objectMapper.writeValueAsString(accountDTO);
+
+        MvcResult mvcResult = mockMvc.perform(patch("/new-balanceAccount").content(body).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated()).andReturn();
+
+        assertTrue(mvcResult.getResponse().getContentAsString().contains(accountHolderRepository.findById(1).get().getName()));
     }
+    @Test
+    void shouldMakeTransaction_WhenValidInputIsProvided() throws Exception {
+        Account originAccount = new Account();
+        //originAccount.setId(1);
+        originAccount.setBalance(new BigDecimal("1000.00"));
+
+        Account endAccount = new Account();
+        //endAccount.setId(2);
+        endAccount.setBalance(new BigDecimal("500.00"));
+
+        accountRepository.save(originAccount);
+        accountRepository.save(endAccount);
+
+        TransactionDTO transactionDTO = new TransactionDTO(originAccount.getId(), endAccount.getId(), "500");
+
+        String body = objectMapper.writeValueAsString(transactionDTO);
+
+        MvcResult mvcResult = mockMvc.perform(patch("/new-transference").content(body).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated()).andReturn();
+
+        String response = mvcResult.getResponse().getContentAsString();
+        System.err.println(response);
+        Transaction transaction = objectMapper.readValue(response, Transaction.class);
+        System.err.println(transaction);
+
+        //assertEquals(originAccount.getId(), transaction.getOriginAccount().getId());
+        //assertEquals(endAccount.getId(), transaction.getEndAccount().getId());
+        //assertEquals(new BigDecimal("500.00"), transaction.getQuantity());
+        assertEquals(new BigDecimal("500.00"), accountRepository.findById(originAccount.getId()).get().getBalance());
+        assertEquals(new BigDecimal("1000.00"), accountRepository.findById(endAccount.getId()).get().getBalance());
+    }
+
 
 
 }

@@ -56,7 +56,6 @@ public class AccountHolderService {
         Account originAccount = optionalOriginAccount.get();
         Account endAccount = optionalEndAccount.get();
         BigDecimal amount = new BigDecimal(transactionDTO.getQuantity());
-        Transaction transaction = new Transaction();
 
         if (originAccount.getBalance().compareTo(amount) < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Origin account does not have sufficient funds");
@@ -65,9 +64,9 @@ public class AccountHolderService {
         originAccount.setBalance(originAccount.getBalance().subtract(amount));
         endAccount.setBalance(endAccount.getBalance().add(amount));
 
-        transaction.setOriginAccount(originAccount);
-        transaction.setEndAccount(endAccount);
-        transaction.setQuantity(amount);
+
+        Transaction transaction = new Transaction(accountRepository.save(originAccount), accountRepository.save(endAccount), amount);
+
 
         return transactionRepository.save(transaction);
     }

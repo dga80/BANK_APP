@@ -1,6 +1,7 @@
 package com.bank.bank.services;
 
 import com.bank.bank.models.Account;
+import com.bank.bank.models.DTO.ThirdPartyDTO;
 import com.bank.bank.models.ThirdParty;
 import com.bank.bank.repositories.AccountHolderRepository;
 import com.bank.bank.repositories.AccountRepository;
@@ -21,46 +22,19 @@ public class ThirdPartyService {
     @Autowired
     private ThirdPartyRepository thirdPartyRepository;
 
-    public void sendMoney(String hashedKey, String secretKey, Integer accountId, BigDecimal amount, Integer targetAccountId) {
-        ThirdParty thirdParty = validateThirdParty(hashedKey, secretKey);
 
-        Account sourceAccount = accountRepository.findByIdAndUser(targetAccountId, thirdParty);
-        if (sourceAccount == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid source account");
-        }
-        if (sourceAccount.getBalance().compareTo(amount) < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient funds");
-        }
+    public void transferThirdParty(ThirdPartyDTO thirdPartyDTO) {
 
-        Account targetAccount = accountRepository.findById(accountId).orElse(null);
-        if (targetAccount == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid target account");
-        }
-        targetAccount.setBalance(targetAccount.getBalance().add(amount));
-        accountRepository.save(targetAccount);
+        ThirdParty thirdParty = thirdPartyRepository.findByHashedKey(thirdPartyDTO.getHashedKey())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "The third party does not exist"));
 
-        sourceAccount.setBalance(sourceAccount.getBalance().subtract(amount));
-        accountRepository.save(sourceAccount);
+        Account account = accountRepository.findBySecretKey(thirdPartyDTO.getSecretKey())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+
+        BigDecimal amountInBD = new BigDecimal(thirdPartyDTO.getAmount());
+        account.setBalance(account.getBalance().add(amountInBD));
     }
 
-    public void receiveMoney(String hashedKey, String secretKey, Integer accountId, BigDecimal amount) {
-        ThirdParty thirdParty = validateThirdParty(hashedKey, secretKey);
-
-        Account targetAccount = accountRepository.findById(accountId).orElse(null);
-        if (targetAccount == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid target account");
-        }
-        targetAccount.setBalance(targetAccount.getBalance().add(amount));
-        accountRepository.save(targetAccount);
-    }
-
-    private ThirdParty validateThirdParty(String hashedKey, String secretKey) {
-        ThirdParty thirdParty = (ThirdParty) thirdPartyRepository.findThirdByHashedKey(hashedKey);
-        if (thirdParty == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid third party credentials");
-        }
-        return thirdParty;
-    }
 
 }
 

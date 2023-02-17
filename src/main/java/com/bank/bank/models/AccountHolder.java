@@ -1,5 +1,6 @@
 package com.bank.bank.models;
 
+import com.bank.bank.models.DTO.AccountDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
@@ -32,6 +33,8 @@ public class AccountHolder extends User{
 
     public AccountHolder() {
     }
+    public AccountHolder(AccountDTO accountDTO) {
+    }
 
     public AccountHolder(String name, LocalDate birthDate) {
         super(name, birthDate);
@@ -42,6 +45,7 @@ public class AccountHolder extends User{
         this.primaryAddress = primaryAddress;
         this.mailingAddress = mailingAddress;
     }
+
 
     public Integer getId() {
         return id;

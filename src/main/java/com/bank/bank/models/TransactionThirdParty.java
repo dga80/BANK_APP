@@ -13,16 +13,14 @@ public class TransactionThirdParty{
     private Integer accountID;
     private Integer thirdPartyID;
     private BigDecimal quantity;
-    private String hashedkey;
 
     public TransactionThirdParty() {
     }
 
-    public TransactionThirdParty(Integer accountID, Integer thirdPartyID, BigDecimal quantity, String hashedkey) {
+    public TransactionThirdParty(Integer accountID, Integer thirdPartyID, BigDecimal quantity) {
         this.accountID = accountID;
         this.thirdPartyID = thirdPartyID;
         this.quantity = quantity;
-        this.hashedkey = hashedkey;
     }
 
     public Integer getId() {
@@ -57,11 +55,5 @@ public class TransactionThirdParty{
         this.quantity = quantity;
     }
 
-    public String getHashedkey() {
-        return hashedkey;
-    }
 
-    public void setHashedkey(String hashedkey) {
-        this.hashedkey = hashedkey;
-    }
 }

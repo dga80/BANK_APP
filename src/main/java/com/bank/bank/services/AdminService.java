@@ -3,6 +3,7 @@ package com.bank.bank.services;
 import com.bank.bank.enums.AccountStatus;
 import com.bank.bank.models.*;
 import com.bank.bank.models.DTO.AccountDTO;
+import com.bank.bank.models.DTO.AccountHolderDTO;
 import com.bank.bank.models.DTO.ThirdPartyDTO;
 import com.bank.bank.repositories.AccountHolderRepository;
 import com.bank.bank.repositories.AccountRepository;
@@ -23,6 +24,12 @@ public class AdminService {
     AccountRepository accountRepository;
     @Autowired
     ThirdPartyRepository thirdPartyRepository;
+
+    public AccountHolder createAccountHolder(AccountDTO accountDTO) {
+
+        AccountHolder newAccountHolder = new AccountHolder(accountDTO);
+        return accountHolderRepository.save(newAccountHolder);
+    }
 
 
     public Savings createSavings(AccountDTO accountDTO){
@@ -91,13 +98,16 @@ public class AdminService {
         return account;
     }
 
-    public ThirdParty addThirdParty(ThirdPartyDTO thirdPartyDTO, String name, LocalDate birthDate, Integer id) {
+    public ThirdParty addThirdParty(ThirdPartyDTO thirdPartyDTO) {
         if (thirdPartyRepository.findByHashedKey(thirdPartyDTO.getHashedKey()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "ThirdParty with this hashedKey already exists");
         }
-
-        ThirdParty newThirdParty = new ThirdParty(name, birthDate, id, thirdPartyDTO.getHashedKey());
+        ThirdParty newThirdParty = new ThirdParty();
         return thirdPartyRepository.save(newThirdParty);
+    }
+    public AccountHolder createAccountHolder(AccountHolderDTO accountHolderDTO) {
+        AccountHolder accountHolder = new AccountHolder(accountHolderDTO.getNewName(), accountHolderDTO.getNewDateOfBirth(), accountHolderDTO.getNewPrimaryAddress(), accountHolderDTO.getNewMailingAddress());
+        return accountHolderRepository.save(accountHolder);
     }
 
 

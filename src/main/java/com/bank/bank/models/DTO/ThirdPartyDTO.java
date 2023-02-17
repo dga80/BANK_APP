@@ -11,6 +11,9 @@ public class ThirdPartyDTO {
         this.amount = amount;
     }
 
+    public ThirdPartyDTO() {
+    }
+
     public String getHashedKey() {
         return hashedKey;
     }

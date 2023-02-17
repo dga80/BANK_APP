@@ -1,11 +1,11 @@
 package com.bank.bank.services;
 
 import com.bank.bank.models.Account;
+import com.bank.bank.models.DTO.AccountDTO;
 import com.bank.bank.models.DTO.ThirdPartyDTO;
 import com.bank.bank.models.ThirdParty;
-import com.bank.bank.repositories.AccountHolderRepository;
-import com.bank.bank.repositories.AccountRepository;
-import com.bank.bank.repositories.ThirdPartyRepository;
+import com.bank.bank.models.TransactionThirdParty;
+import com.bank.bank.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,21 +20,27 @@ public class ThirdPartyService {
     @Autowired
     AccountHolderRepository accountHolderRepository;
     @Autowired
-    private ThirdPartyRepository thirdPartyRepository;
+    ThirdPartyRepository thirdPartyRepository;
+    @Autowired
+    TransactionRepository transactionRepository;
+    @Autowired
+    ThirdTransRepository thirdTransRepository;
 
 
-    public void transferThirdParty(ThirdPartyDTO thirdPartyDTO) {
+    public  TransactionThirdParty transferThirdParty(ThirdPartyDTO thirdPartyDTO) {
 
         ThirdParty thirdParty = thirdPartyRepository.findByHashedKey(thirdPartyDTO.getHashedKey())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "The third party does not exist"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "The third party does not exist"));
 
         Account account = accountRepository.findBySecretKey(thirdPartyDTO.getSecretKey())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
 
         BigDecimal amountInBD = new BigDecimal(thirdPartyDTO.getAmount());
         account.setBalance(account.getBalance().add(amountInBD));
+        accountRepository.save(account);
+        TransactionThirdParty transactionThirdParty= new TransactionThirdParty(account.getId(),thirdParty.getId(),amountInBD);
+        return thirdTransRepository.save(transactionThirdParty);
     }
-
 
 }
 

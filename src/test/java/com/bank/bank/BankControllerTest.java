@@ -3,11 +3,15 @@ package com.bank.bank;
 import com.bank.bank.enums.AccountStatus;
 import com.bank.bank.models.*;
 import com.bank.bank.models.DTO.AccountDTO;
+import com.bank.bank.models.DTO.AccountHolderDTO;
+import com.bank.bank.models.DTO.ThirdPartyDTO;
 import com.bank.bank.models.DTO.TransactionDTO;
 import com.bank.bank.repositories.AccountHolderRepository;
 import com.bank.bank.repositories.AccountRepository;
+import com.bank.bank.repositories.ThirdPartyRepository;
 import com.bank.bank.repositories.TransactionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,10 +20,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 
@@ -43,6 +49,8 @@ public class BankControllerTest {
     AccountHolderRepository accountHolderRepository;
     @Autowired
     TransactionRepository transactionRepository;
+    @Autowired
+    ThirdPartyRepository thirdPartyRepository;
 
     @BeforeEach
     void setUP() {
@@ -50,6 +58,8 @@ public class BankControllerTest {
         Address address1 = new Address("c/mallorca","barcelona", "españa","08026");
         Address address2 = new Address("c/provença","barcelona","españa","08026");
         AccountHolder accountHolder1 = accountHolderRepository.save(new AccountHolder("dani", LocalDate.of(1980,1,15),address1,address2));
+        AccountHolderDTO accountHolderDTO = new AccountHolderDTO("Gael", LocalDate.of(2019, 9, 6), address1, address2);
+
 
         Savings savings1 = new Savings(BigDecimal.valueOf(222222),"1234", accountHolder1,null,BigDecimal.valueOf(10), AccountStatus.ACTIVE,BigDecimal.valueOf(22),BigDecimal.valueOf(300));
         accountRepository.save(savings1);
@@ -58,7 +68,10 @@ public class BankControllerTest {
     void tearDown(){
         transactionRepository.deleteAll();
         accountRepository.deleteAll();
+        thirdPartyRepository.deleteAll();
+
     }
+
     @Test
     void shouldAddNewSavingAccount_WhenPostIsPerformed() throws Exception {
         AccountDTO accountDTO = new AccountDTO("400","1234",1,1,"5","300","40", "1000", "40");
@@ -101,11 +114,9 @@ public class BankControllerTest {
     @Test
     void shouldMakeTransaction_WhenValidInputIsProvided() throws Exception {
         Account originAccount = new Account();
-        //originAccount.setId(1);
         originAccount.setBalance(new BigDecimal("1000.00"));
 
         Account endAccount = new Account();
-        //endAccount.setId(2);
         endAccount.setBalance(new BigDecimal("500.00"));
 
         accountRepository.save(originAccount);
@@ -115,19 +126,48 @@ public class BankControllerTest {
 
         String body = objectMapper.writeValueAsString(transactionDTO);
 
-        MvcResult mvcResult = mockMvc.perform(patch("/new-transference").content(body).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated()).andReturn();
+        MvcResult mvcResult = mockMvc.perform(patch("/new-transaction").content(body).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated()).andReturn();
 
         String response = mvcResult.getResponse().getContentAsString();
-        System.err.println(response);
+        //System.err.println(response);
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         Transaction transaction = objectMapper.readValue(response, Transaction.class);
-        System.err.println(transaction);
+        //System.err.println(transaction);
 
-        //assertEquals(originAccount.getId(), transaction.getOriginAccount().getId());
-        //assertEquals(endAccount.getId(), transaction.getEndAccount().getId());
-        //assertEquals(new BigDecimal("500.00"), transaction.getQuantity());
         assertEquals(new BigDecimal("500.00"), accountRepository.findById(originAccount.getId()).get().getBalance());
         assertEquals(new BigDecimal("1000.00"), accountRepository.findById(endAccount.getId()).get().getBalance());
     }
+    @Test
+    void shouldMakeThirdPartyTransference_WhenValidInputIsProvided() throws Exception{
+        Account originAccount = new Account();
+        originAccount.setBalance(new BigDecimal("1000.00"));
+        originAccount.setSecretKey("secretKey");
+
+        Account endAccount = new Account();
+        endAccount.setBalance(new BigDecimal("500.00"));
+
+        ThirdParty thirdParty = new ThirdParty();
+        thirdParty.setName("Third Party");
+        thirdParty.setHashedKey("hashedKey");
+
+        accountRepository.save(originAccount);
+        accountRepository.save(endAccount);
+        thirdPartyRepository.save(thirdParty);
+
+        ThirdPartyDTO thirdPartyDTO = new ThirdPartyDTO(thirdParty.getHashedKey(),originAccount.getSecretKey(),"-300");
+
+        String body = objectMapper.writeValueAsString(thirdPartyDTO);
+
+        MvcResult mvcResult = mockMvc.perform(patch("/new-ThirdPartyTransference").content(body).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isCreated()).andReturn();
+
+        String response = mvcResult.getResponse().getContentAsString();
+
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        TransactionThirdParty transactionThirdParty = objectMapper.readValue(response, TransactionThirdParty.class);
+
+        assertEquals(new BigDecimal("700.00"), accountRepository.findById(originAccount.getId()).get().getBalance());
+    }
+
 
 
 

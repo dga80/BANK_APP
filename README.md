@@ -30,13 +30,6 @@ ThirdParty:
 
 • Maven/ Java 17/ Spring Boot / Spring Data JPA / Spring Validation/ Spring Web / Spring Boot DevTools / MySQL Connector / Spring Boot Starter Test
 
-## Run Locally
-
-Clone the project
-
-```bash
-https://github.com/dga80/BANK_APP.git
-
 ## Authors
 
 - @dga80
@@ -47,3 +40,11 @@ https://github.com/dga80/BANK_APP.git
  - Jose Caro (TA)
  - Alejandro Martinez (TA)
  - Ironhack Barcelona Tech bootcamps
+
+## Run Locally
+
+Clone the project
+
+```bash
+https://github.com/dga80/BANK_APP.git
+
